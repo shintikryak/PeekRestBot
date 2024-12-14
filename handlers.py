@@ -1,67 +1,105 @@
-from aiogram import Router
+import sqlite3
+from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.filters import CommandStart
-
-import messages
+from aiogram.filters import Command
 
 router = Router()
 
-# Обработчик команды /start
-@router.message(CommandStart())
+# Функция для получения всех объектов
+def get_locations():
+    conn = sqlite3.connect("restaurants.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name FROM locations")
+    locations = cursor.fetchall()
+    conn.close()
+    return locations
+
+def get_restaurants_by_location(location_id):
+    conn = sqlite3.connect("restaurants.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name FROM restaurants WHERE location_id = ?", (location_id,))
+    restaurants = cursor.fetchall()
+    conn.close()
+    return restaurants
+
+def get_tables_by_restaurant(restaurant_id):
+    conn = sqlite3.connect("restaurants.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, capacity FROM tables WHERE restaurant_id = ? AND available = 1", (restaurant_id,))
+    tables = cursor.fetchall()
+    conn.close()
+    return tables
+
+# Команда /start
+@router.message(Command("start"))
 async def start_command(message: Message):
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Показать рестораны", callback_data="show_restaurants")],
-    ])
-    await message.answer(messages.START_MESSAGE, reply_markup=keyboard)
+    locations = get_locations()
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=name, callback_data=f"location:{id}")]
+            for id, name in locations
+        ]
+    )
+    await message.answer("Выберите вашу локацию:", reply_markup=keyboard)
 
-# Обработчик кнопки "Показать рестораны"
-@router.callback_query(lambda callback: callback.data == "show_restaurants")
-async def show_restaurants(callback: CallbackQuery):
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Ресторан А", callback_data="restaurant_a")],
-        [InlineKeyboardButton(text="Ресторан Б", callback_data="restaurant_b")],
-        [InlineKeyboardButton(text="Ресторан В", callback_data="restaurant_c")],
-    ])
-    await callback.message.edit_text(messages.CHOOSE_RESTAURANT, reply_markup=keyboard)
-    await callback.answer()
+# Локация → Рестораны
+@router.callback_query(F.data.startswith("location:"))
+async def location_selected(callback: CallbackQuery):
+    location_id = int(callback.data.split(":")[1])
+    restaurants = get_restaurants_by_location(location_id)
 
-# Обработчик выбора ресторана
-@router.callback_query(lambda callback: callback.data in ["restaurant_a", "restaurant_b", "restaurant_c"])
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=name, callback_data=f"restaurant:{id}:{location_id}")]
+            for id, name in restaurants
+        ] + [[InlineKeyboardButton(text="Назад", callback_data="back:locations")]]
+    )
+    await callback.message.edit_text("Выберите ресторан:", reply_markup=keyboard)
+
+# Рестораны → Столики
+@router.callback_query(F.data.startswith("restaurant:"))
 async def restaurant_selected(callback: CallbackQuery):
-    restaurant_name = {
-        "restaurant_a": "Ресторан А",
-        "restaurant_b": "Ресторан Б",
-        "restaurant_c": "Ресторан В"
-    }.get(callback.data, "Неизвестный ресторан")
+    data = callback.data.split(":")
+    restaurant_id = int(data[1])
+    location_id = int(data[2])
+    tables = get_tables_by_restaurant(restaurant_id)
 
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Свободные столики", callback_data=f"tables_{callback.data}")],
-    ])
-    await callback.message.edit_text(messages.RESTAURANT_SELECTED.format(restaurant_name=restaurant_name), reply_markup=keyboard)
-    await callback.answer()
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=f"Столик на {capacity} чел.", callback_data=f"table:{id}:{restaurant_id}")]
+            for id, capacity in tables
+        ] + [[InlineKeyboardButton(text="Назад", callback_data=f"back:restaurants:{location_id}")]]
+    )
+    await callback.message.edit_text("Выберите столик:", reply_markup=keyboard)
 
-# Обработчик кнопки "Свободные столики"
-@router.callback_query(lambda callback: callback.data.startswith("tables_"))
-async def show_tables(callback: CallbackQuery):
-    restaurant_code = callback.data.split("_")[1]
+# Столики → Рестораны
+@router.callback_query(F.data.startswith("back:restaurants:"))
+async def back_to_restaurants(callback: CallbackQuery):
+    location_id = int(callback.data.split(":")[2])
+    restaurants = get_restaurants_by_location(location_id)
 
-    # Заглушка для столиков
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Столик на двоих", callback_data="table_2")],
-        [InlineKeyboardButton(text="Столик на четверых", callback_data="table_4")],
-        [InlineKeyboardButton(text="VIP-зона", callback_data="table_vip")],
-    ])
-    await callback.message.edit_text(messages.SHOW_TABLES_IN_RESTAURANT.format(restaurant_code=restaurant_code), reply_markup=keyboard)
-    await callback.answer()
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=name, callback_data=f"restaurant:{id}:{location_id}")]
+            for id, name in restaurants
+        ] + [[InlineKeyboardButton(text="Назад", callback_data="back:locations")]]
+    )
+    await callback.message.edit_text("Выберите ресторан:", reply_markup=keyboard)
 
-# Обработчик выбора конкретного столика
-@router.callback_query(lambda callback: callback.data.startswith("table_"))
+# Рестораны → Локации
+@router.callback_query(F.data == "back:locations")
+async def back_to_locations(callback: CallbackQuery):
+    locations = get_locations()
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=name, callback_data=f"location:{id}")]
+            for id, name in locations
+        ]
+    )
+    await callback.message.edit_text("Выберите вашу локацию:", reply_markup=keyboard)
+
+# Выбор столика
+@router.callback_query(F.data.startswith("table:"))
 async def table_selected(callback: CallbackQuery):
-    table_name = {
-        "table_2": "Столик на двоих",
-        "table_4": "Столик на четверых",
-        "table_vip": "VIP-зона"
-    }.get(callback.data, "Неизвестный столик")
-
-    await callback.message.edit_text(messages.TABLE_SELECTED.format(table_name=table_name))
-    await callback.answer()
+    table_id = int(callback.data.split(":")[1])
+    await callback.message.edit_text(f"Вы выбрали столик с ID {table_id}. Свяжитесь с администратором для бронирования.")
