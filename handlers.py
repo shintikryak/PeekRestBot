@@ -2,6 +2,8 @@ from aiogram import Router
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import CommandStart
 
+import messages
+
 router = Router()
 
 # Обработчик команды /start
@@ -10,7 +12,7 @@ async def start_command(message: Message):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Показать рестораны", callback_data="show_restaurants")],
     ])
-    await message.answer("Привет! Я бот для бронирования столов. Выберите действие:", reply_markup=keyboard)
+    await message.answer(messages.START_MESSAGE, reply_markup=keyboard)
 
 # Обработчик кнопки "Показать рестораны"
 @router.callback_query(lambda callback: callback.data == "show_restaurants")
@@ -20,7 +22,7 @@ async def show_restaurants(callback: CallbackQuery):
         [InlineKeyboardButton(text="Ресторан Б", callback_data="restaurant_b")],
         [InlineKeyboardButton(text="Ресторан В", callback_data="restaurant_c")],
     ])
-    await callback.message.edit_text("Выберите ресторан:", reply_markup=keyboard)
+    await callback.message.edit_text(messages.CHOOSE_RESTAURANT, reply_markup=keyboard)
     await callback.answer()
 
 # Обработчик выбора ресторана
@@ -35,7 +37,7 @@ async def restaurant_selected(callback: CallbackQuery):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Свободные столики", callback_data=f"tables_{callback.data}")],
     ])
-    await callback.message.edit_text(f"Вы выбрали {restaurant_name}. Что дальше?", reply_markup=keyboard)
+    await callback.message.edit_text(messages.RESTAURANT_SELECTED.format(restaurant_name=restaurant_name), reply_markup=keyboard)
     await callback.answer()
 
 # Обработчик кнопки "Свободные столики"
@@ -49,7 +51,7 @@ async def show_tables(callback: CallbackQuery):
         [InlineKeyboardButton(text="Столик на четверых", callback_data="table_4")],
         [InlineKeyboardButton(text="VIP-зона", callback_data="table_vip")],
     ])
-    await callback.message.edit_text(f"Свободные столики в {restaurant_code}:", reply_markup=keyboard)
+    await callback.message.edit_text(messages.SHOW_TABLES_IN_RESTAURANT.format(restaurant_code=restaurant_code), reply_markup=keyboard)
     await callback.answer()
 
 # Обработчик выбора конкретного столика
@@ -61,5 +63,5 @@ async def table_selected(callback: CallbackQuery):
         "table_vip": "VIP-зона"
     }.get(callback.data, "Неизвестный столик")
 
-    await callback.message.edit_text(f"Вы выбрали {table_name}. Чтобы забронировать, свяжитесь с администратором.")
+    await callback.message.edit_text(messages.TABLE_SELECTED.format(table_name=table_name))
     await callback.answer()

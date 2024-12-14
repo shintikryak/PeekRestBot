@@ -1,0 +1,5 @@
+START_MESSAGE = "Привет! Я бот для бронирования столов. Выберите действие:"
+CHOOSE_RESTAURANT = "Выберите ресторан:"
+RESTAURANT_SELECTED = "Вы выбрали {restaurant_name}. Что дальше?"
+SHOW_TABLES_IN_RESTAURANT = "Свободные столики в {restaurant_code}:"
+TABLE_SELECTED = "Вы выбрали {table_name}. Чтобы забронировать, свяжитесь с администратором."
