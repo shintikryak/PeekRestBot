@@ -2,33 +2,20 @@ import sqlite3
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
+from ModelsWorkers.location import LocationModelWorker
+from ModelsWorkers.restaurant import RestaurantModelWorker
+from ModelsWorkers.table import TableModelWorker
 
 router = Router()
 
-# Функция для получения всех объектов
 def get_locations():
-    conn = sqlite3.connect("restaurants.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, name FROM locations")
-    locations = cursor.fetchall()
-    conn.close()
-    return locations
+    return LocationModelWorker().get_all()
 
 def get_restaurants_by_location(location_id):
-    conn = sqlite3.connect("restaurants.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, name FROM restaurants WHERE location_id = ?", (location_id,))
-    restaurants = cursor.fetchall()
-    conn.close()
-    return restaurants
+    return RestaurantModelWorker().get_restaurants_by_location(location_id)
 
 def get_tables_by_restaurant(restaurant_id):
-    conn = sqlite3.connect("restaurants.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, capacity FROM tables WHERE restaurant_id = ? AND available = 1", (restaurant_id,))
-    tables = cursor.fetchall()
-    conn.close()
-    return tables
+    return TableModelWorker().get_tables_by_restaurant(restaurant_id)
 
 # Команда /start
 @router.message(Command("start"))

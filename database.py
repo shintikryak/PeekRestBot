@@ -1,5 +1,7 @@
 import sqlite3
 
+#по сути она теперь не нужна (полное дерьмо)
+
 def initialize_db():
     conn = sqlite3.connect("restaurants.db")
     cursor = conn.cursor()
