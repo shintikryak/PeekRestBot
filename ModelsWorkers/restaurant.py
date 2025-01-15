@@ -1,4 +1,4 @@
-from base import BaseModelWorker
+from .base import BaseModelWorker
 from Models.restaurant import Restaurant
 
 class RestaurantModelWorker(BaseModelWorker):

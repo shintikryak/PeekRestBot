@@ -1,4 +1,4 @@
-from base import BaseModelWorker
+from .base import BaseModelWorker
 from Models.locations import Location
 
 class LocationModelWorker(BaseModelWorker):

@@ -23,8 +23,8 @@ async def start_command(message: Message):
     locations = get_locations()
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text=name, callback_data=f"location:{id}")]
-            for id, name in locations
+            [InlineKeyboardButton(text=piece['name'], callback_data=f"location:{piece['id']}")]
+            for piece in locations
         ]
     )
     await message.answer("Выберите вашу локацию:", reply_markup=keyboard)
@@ -37,8 +37,8 @@ async def location_selected(callback: CallbackQuery):
 
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text=name, callback_data=f"restaurant:{id}:{location_id}")]
-            for id, name in restaurants
+            [InlineKeyboardButton(text=piece['name'], callback_data=f"restaurant:{piece['id']}:{location_id}")]
+            for piece in restaurants
         ] + [[InlineKeyboardButton(text="Назад", callback_data="back:locations")]]
     )
     await callback.message.edit_text("Выберите ресторан:", reply_markup=keyboard)
@@ -53,8 +53,8 @@ async def restaurant_selected(callback: CallbackQuery):
 
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text=f"Столик на {capacity} чел.", callback_data=f"table:{id}:{restaurant_id}")]
-            for id, capacity in tables
+            [InlineKeyboardButton(text=f"Столик на {piece['capacity']} чел.", callback_data=f"table:{piece['id']}:{restaurant_id}")]
+            for piece in tables
         ] + [[InlineKeyboardButton(text="Назад", callback_data=f"back:restaurants:{location_id}")]]
     )
     await callback.message.edit_text("Выберите столик:", reply_markup=keyboard)
