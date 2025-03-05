@@ -1,6 +1,7 @@
 from .base import BaseModelWorker
 from Models.locations import Location
 
+
 class LocationModelWorker(BaseModelWorker):
     def __init__(self):
         super().__init__()

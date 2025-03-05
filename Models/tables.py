@@ -2,6 +2,7 @@ from sqlalchemy import Boolean, Column, ForeignKey, Integer
 from .base import Base
 from sqlalchemy.orm import relationship
 
+
 class Table(Base):
     __tablename__ = "table"
 

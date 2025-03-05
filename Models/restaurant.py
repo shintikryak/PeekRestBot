@@ -2,6 +2,7 @@ from sqlalchemy import Column, ForeignKey, Integer, String
 from .base import Base
 from sqlalchemy.orm import relationship
 
+
 class Restaurant(Base):
     __tablename__ = "restaurant"
 

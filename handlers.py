@@ -29,6 +29,7 @@ async def start_command(message: Message):
     )
     await message.answer("Выберите вашу локацию:", reply_markup=keyboard)
 
+
 # Локация → Рестораны
 @router.callback_query(F.data.startswith("location:"))
 async def location_selected(callback: CallbackQuery):
