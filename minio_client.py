@@ -1,4 +1,5 @@
 from minio import Minio
+from io import BytesIO
 
 class MinioClient:
     def __init__(self):
@@ -15,5 +16,5 @@ class MinioClient:
         for obj in objects:
              #if restaurant in obj.object_name:
             data = self.client.get_object("tables", obj.object_name)
-            photos.append(data.read())
+            photos.append(BytesIO(data.read()))
         return photos
