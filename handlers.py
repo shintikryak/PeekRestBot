@@ -5,6 +5,7 @@ from aiogram.filters import Command
 from ModelsWorkers.location import LocationModelWorker
 from ModelsWorkers.restaurant import RestaurantModelWorker
 from ModelsWorkers.table import TableModelWorker
+from minio_client import MinioClient
 
 router = Router()
 
@@ -16,6 +17,9 @@ def get_restaurants_by_location(location_id):
 
 def get_tables_by_restaurant(restaurant_id):
     return TableModelWorker().get_tables_by_restaurant(restaurant_id)
+
+def get_restaurant_by_id(id):
+    return RestaurantModelWorker().get_restaurant_by_id(id)
 
 # Команда /start
 @router.message(Command("start"))
@@ -50,7 +54,10 @@ async def restaurant_selected(callback: CallbackQuery):
     data = callback.data.split(":")
     restaurant_id = int(data[1])
     location_id = int(data[2])
+
+    restaurant = get_restaurant_by_id(restaurant_id)
     tables = get_tables_by_restaurant(restaurant_id)
+    photos = MinioClient().get_tables_by_rest(restaurant.name)
 
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
