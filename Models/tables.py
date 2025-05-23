@@ -14,3 +14,10 @@ class Table(Base):
 
     def toDict(self) -> dict:
         return {"id": self.id, "capacity": self.capacity, "available": self.available}
+    
+    def init(rest_id, capacity, available):
+        table = Table()
+        table.restaurant_id = rest_id
+        table.capacity = capacity
+        table.available = available
+        return table

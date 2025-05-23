@@ -1,5 +1,7 @@
 from .base import BaseModelWorker
 from Models.tables import Table
+from minio_client import MinioClient
+
 
 class TableModelWorker(BaseModelWorker):
     def __init__(self):
@@ -12,3 +14,11 @@ class TableModelWorker(BaseModelWorker):
     def reserve_table(self, table_id: int):
         self.session.query(Table).filter(Table.id==table_id).update({'available': False})
         self.session.commit()
+    
+    def add_table(self, restaurant_id, capacity, photo):
+        table = Table.init(restaurant_id, capacity, True)
+        self.session.add(table)
+        self.session.commit()
+        MinioClient().add_table(photo, restaurant_id, table.id)
+        
+
